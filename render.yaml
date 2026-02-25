@@ -1,0 +1,19 @@
+services:
+  # ── LONDON SCALP AGENT: Runs Mon-Fri at 06:55 UTC ──
+  - type: cron
+    name: london-scalp-agent
+    runtime: node
+    schedule: "55 6 * * 1-5"    # Mon-Fri at 06:55 UTC (5 min before session)
+    buildCommand: npm install
+    startCommand: node src/london_index.js
+    envVars:
+      - key: TWELVEDATA_API_KEY
+        sync: false
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
+      - key: SCALP_WATCHLIST
+        value: XAU/USD
+      - key: MT5_AUTO_TRADE
+        value: "false"
+      - key: DEBUG_MODE
+        value: "false"

@@ -1,0 +1,17 @@
+{
+  "name": "london-scalp-agent",
+  "version": "1.0.0",
+  "description": "XAU/USD London open SELL-only pullback scalper | 53.3% WR | PF 1.71",
+  "type": "module",
+  "main": "src/london_index.js",
+  "scripts": {
+    "start": "node src/london_index.js",
+    "dev": "DEBUG_MODE=true node src/london_index.js"
+  },
+  "dependencies": {
+    "technicalindicators": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
