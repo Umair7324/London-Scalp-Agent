@@ -89,6 +89,22 @@ async function run() {
   }
   console.log('✅ Warmed up\n');
 
+  // ── Auto-exit at 08:10 UTC (session ends 08:00) ──
+  const nowT = new Date();
+  const exitAt = new Date();
+  exitAt.setUTCHours(8, 10, 0, 0);
+  if (exitAt <= nowT) exitAt.setUTCDate(exitAt.getUTCDate() + 1);
+  const msUntilExit = exitAt - nowT;
+  setTimeout(async () => {
+    const s = engine.getStats();
+    const msg = `📊 London Session Done | ${s.wins}W ${s.losses}L | WR: ${s.winRate}% | PF: ${s.profitFactor} | ${s.totalR.toFixed(1)}R total`;
+    console.log('\n' + msg);
+    await notify(msg);
+    console.log('👋 Session ended, exiting cleanly.');
+    process.exit(0);
+  }, msUntilExit);
+  console.log(`⏱ Auto-exit scheduled at 08:10 UTC (in ${Math.round(msUntilExit/60000)} min)\n`);
+
   // ── Poll every 60 seconds ──
   console.log('⏱ Polling every 60 seconds...\n');
   setInterval(async () => {
