@@ -22,6 +22,7 @@ export class LondonScalpEngine {
   constructor() {
     this.candles1m    = {};
     this.candles5m    = {};
+    this.candles1h    = {};   // 1h macro filter
     this.openTrade    = {};
     this.lastSignalTs = {};
     this.config       = LONDON_CONFIG;
@@ -41,6 +42,33 @@ export class LondonScalpEngine {
   load5mCandles(symbol, candles) {
     this.candles5m[symbol] = candles.slice(-80);
     console.log(`   📊 LondonEngine: Loaded ${candles.length} × 5min candles for ${symbol}`);
+  }
+
+  load1hCandles(symbol, candles) {
+    this.candles1h[symbol] = candles.slice(-100);
+    console.log(`   📊 LondonEngine: Loaded ${candles.length} × 1h candles for ${symbol} (macro filter)`);
+  }
+
+  get1hMacro(symbol) {
+    const c1h = this.candles1h[symbol];
+    if (!c1h || c1h.length < 55) return 'NEUTRAL';
+    const closes = c1h.map(c => c.close || c.c);
+    const highs  = c1h.map(c => c.high  || c.h);
+    const lows   = c1h.map(c => c.low   || c.l);
+    try {
+      const ema21 = EMA.calculate({ values: closes, period: 21 });
+      const ema50 = EMA.calculate({ values: closes, period: 50 });
+      const adx   = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
+      if (!ema21.length || !ema50.length || !adx.length) return 'NEUTRAL';
+      const e21    = ema21[ema21.length - 1];
+      const e50    = ema50[ema50.length - 1];
+      const price  = closes[closes.length - 1];
+      const adxVal = adx[adx.length - 1].adx;
+      if (adxVal < 20) return 'NEUTRAL';
+      if (e21 > e50 && price > e21) return 'BULLISH';
+      if (e21 < e50 && price < e21) return 'BEARISH';
+      return 'NEUTRAL';
+    } catch { return 'NEUTRAL'; }
   }
 
   push1mCandle(symbol, candle) {
@@ -233,6 +261,12 @@ export class LondonScalpEngine {
     const trend = this.get5mTrend(symbol);
     if (trend !== 'BEARISH') {
       return { action: 'HOLD', reason: `5min trend: ${trend} (need BEARISH)` };
+    }
+
+    // ── 1H MACRO FILTER: block SELL if macro BULLISH ──
+    const macro = this.get1hMacro(symbol);
+    if (macro === 'BULLISH') {
+      return { action: 'HOLD', reason: `1h macro BULLISH — SELL blocked` };
     }
 
     const sig = this.getSellSignal(symbol);
