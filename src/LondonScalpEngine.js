@@ -111,7 +111,9 @@ export class LondonScalpEngine {
       const e50 = ema50[ema50.length - 1];
       const p   = closes[closes.length - 1];
       const adxVal = adx[adx.length - 1].adx;
-      if (e9 < e21 && e21 < e50 && p < e9 && adxVal >= 25) return 'BEARISH';
+      // 3/4 conditions: price < e9 removed — pullbacks temporarily push price above EMA9
+      // entry signal already validates price position (getSellSignal: price >= e8 → null)
+      if (e9 < e21 && e21 < e50 && adxVal >= 25) return 'BEARISH';
       return 'NEUTRAL';
     } catch { return 'NEUTRAL'; }
   }
